@@ -1,0 +1,16 @@
+=== DISEÑO DEL ETL ===
+ETL: Extract, Transform, Load
+
+Tablas identificadas: usuarios, maquinas, analisis, puertos, alertas
+
+--- Almacén de datos ---
+Proceso:        Almacén de alertas del Control de incidencias (SIEM)
+Grano:          Lo más fino posible
+Dimensiones:    timestamp, sid, msg, clasificación, prioridad, protocolo, origen, destino, puerto
+
+--- Esquema ---
+Definido a través del modelo UML y BPMN del proceso del Control de Incidencias
+Roles:
+-Análisis:          Detecta, Analiza y comprueba el riesgo de una incidencia sobre una serie de activos
+-Infraestructuras:  Encargado del inventario de activos, generación de informes y aplicación de salvaguardas
+-Dirección:         Califican el riesgo de una amenaza y deciden los salvaguardas.
