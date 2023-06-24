@@ -6,12 +6,12 @@ import pandas as pd
 
 query = '''
     SELECT k.ip, k.vulnerabilidades_detectadas, a.timestamp, a.prioridad
-    FROM alertas a 
+    FROM alertas a
     JOIN (
         SELECT * FROM maquinas m JOIN analisis s
         WHERE s.id = m.id
-        ) as k 
-    WHERE a.destino=k.ip
+        ) as k
+    ON (a.origen = k.ip or a.destino = k.ip)
 '''
 
 # Connect to the database

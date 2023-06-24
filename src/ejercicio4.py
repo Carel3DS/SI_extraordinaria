@@ -1,130 +1,100 @@
-# EJERCICIO 4
-#Damos por hecho que los datos del .csv están cargados en la BBDD desde el ejercicio anterior, por lo que no se muestra cómo hacerlo
-######################################Para seleccionar las IP de origen más problemáticas y representarlas:
 import sqlite3
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
 
-con = sqlite3.connect('practica1csv.db')
-cur = con.cursor()
-cur.execute("SELECT origin, COUNT(*) FROM alertas WHERE priority = 1 GROUP BY origin ORDER BY COUNT(*) DESC LIMIT 10")
 
-results = cur.fetchall()
+# Ejecuta la consulta SQL y cargar los resultados en un DataFrame
+query = '''
+    SELECT a.destino,
+       a.origen,
+       a.timestamp,
+       a.prioridad,
+       a.clasificacion,
+       k.servicios_inseguros,
+       k.servicios,
+       k.id,
+       k.vulnerabilidades_detectadas,
+       k.puertos_abiertos
+    FROM alertas a
+    JOIN (SELECT * FROM analisis a
+            JOIN (SELECT m.id, m.ip, COUNT(*) AS puertos_abiertos
+                FROM puertos p
+                INNER JOIN maquinas m on p.id = m.id GROUP BY m.id
+            ) AS m
+            ON a.id = m.id
+        ) AS k
+    ON (a.origen = k.ip or a.destino = k.ip);
+'''
+# Conecta a la BD
+con = sqlite3.connect('data/practica1.db')
+df = pd.read_sql_query(query, con)
+
+# Cerramos la conexión a la base de datos
 con.close()
 
-ips = [result[0] for result in results]
-counts = [result[1] for result in results]
+# Ajustamos tamaño vertical de los plots
+plt.figure(figsize=(10,7))
 
-plt.bar(ips, counts)
-plt.xlabel('IPs de origen')
-plt.ylabel('Número de incidencias')
-plt.title('Top 10 IPs de origen con mayor número de incidencias (prioridad = 1)')
+# Tarea 1: Mostrar las 10 IP de origen más problemáticas en un gráfico de barras
+top_10_ips = df[df['prioridad'] == 1]['origen'].value_counts().head(10)
+plt.bar(top_10_ips.index, top_10_ips.values)
+plt.xlabel('IP de Origen')
+plt.xticks(rotation=30) # Rota las etiquetas de las ordenadas para mejor visibilidad
+plt.ylabel('Número de Alertas')
+plt.title('Top 10 IP de Origen más Problemáticas')
+plt.show()
 
+# Tarea 2: Número de alertas a lo largo del tiempo en un histograma
+df['timestamp'] = pd.to_datetime(df['timestamp'])
+plt.hist(df['timestamp'], bins=30, edgecolor='black')
+plt.xlabel('Tiempo')
+plt.xticks(rotation=15)
+plt.ylabel('Número de Alertas')
+plt.title('Número de Alertas a lo largo del Tiempo')
+plt.tight_layout()
+
+plt.show()
+# Tarea 3: Porcentaje del total de alertas por categoría en un gráfico circular
+plt.figure(figsize=(10,10))
+
+conteo_alertas = df['clasificacion'].value_counts()
+
+etiquetas = ['{0} - {1:1.3f} %'.format(i,j) for i,j in zip(df['clasificacion'].unique(), (conteo_alertas/conteo_alertas.sum())*100)]
+
+plt.title('Porcentaje del Total de Alertas por Categoría')
+plt.pie(conteo_alertas, startangle=90, radius=1)
+
+# Añadir etiquetas fuera del gráfico
+plt.legend(etiquetas, bbox_to_anchor=(0.9, 0))
+plt.tight_layout()
+plt.show()
+
+
+#Añadir ejes
+
+# Tarea 4: Dispositivos más vulnerables basados en la suma de servicios vulnerables y vulnerabilidades detectadas
+df['punt_vuln'] = df['servicios_inseguros'] + df['vulnerabilidades_detectadas']
+
+#Agrupamos por id y los ordenamos de mayor a menor
+top_vuln = df.groupby('id')[['punt_vuln']].max().sort_values(by='punt_vuln', ascending=False)
+plt.bar(top_vuln.index, top_vuln['punt_vuln'])
+plt.xlabel('Dispositivo')
+plt.ylabel('Puntuación de Vulnerabilidad')
+plt.title('Top Dispositivos más Vulnerables')
+
+plt.xticks(rotation=30)
+plt.figure(figsize=(10,7))
+plt.show()
+
+# Tarea 5: Media de puertos abiertos en comparación con servicios inseguros y el total de servicios detectados
+media_puertos_abiertos = df['puertos_abiertos'].mean()
+media_servicios_inseguros = df['servicios_inseguros'].mean()
+media_total_servicios = df['servicios'].mean()
+plt.bar(['Puertos Abiertos', 'Servicios Inseguros', 'Total de Servicios'],
+        [media_puertos_abiertos, media_servicios_inseguros, media_total_servicios])
+plt.ylabel('Media')
+plt.title('Media de Puertos Abiertos, Servicios Inseguros y Total de Servicios')
 plt.show()
 
 
 
-###############################Número de alertas en el tiempo:
-conn = sqlite3.connect('practica1csv.db')
-
-query = '''
-        SELECT date(timestamp) as date, count(*) as num_alerts
-        FROM alertas
-        GROUP BY date(timestamp)
-        ORDER BY date(timestamp)
-        '''
-
-df = pd.read_sql_query(query, conn)
-
-conn.close()
-
-df['date'] = pd.to_datetime(df['date'])
-
-plt.figure(figsize=(12, 6))
-plt.plot(df['date'], df['num_alerts'])
-plt.title('Número de alertas por día')
-plt.xlabel('Fecha')
-plt.ylabel('Número de alertas')
-
-plt.show()
-
-
-
-###################Número de alertas por categoría:
-conn = sqlite3.connect('practica1csv.db')
-
-query = "SELECT clasification, COUNT(*) as num_alertas FROM alertas GROUP BY clasification"
-
-df = pd.read_sql_query(query, conn)
-
-df.plot(kind='bar', x='clasification', y='num_alertas')
-plt.xlabel('Categoría de alerta')
-plt.ylabel('Número de alertas')
-plt.title('Número de alertas por categoría')
-plt.show()
-
-
-
-########################Dispositios más vulnerables:
-conn = sqlite3.connect('practica1csv.db')
-cursor = conn.cursor()
-
-query = """
-SELECT origin, COUNT(*) AS total
-FROM alertas
-GROUP BY origin
-ORDER BY total DESC
-"""
-
-cursor.execute(query)
-results = cursor.fetchall()
-
-conn.close()
-
-num_devices = 10
-x_labels = [result[0] for result in results[:num_devices]]
-y_values = [result[1] for result in results[:num_devices]]
-
-plt.bar(x_labels, y_values)
-plt.title(f"Top {num_devices} dispositivos más vulnerables")
-plt.xlabel("Dispositivo")
-plt.ylabel("Número de alertas")
-plt.show()
-
-
-
-#####################################Media de puertos abiertos:
-conn = sqlite3.connect('practica1csv.db')
-
-query = '''
-SELECT clasification, AVG(port) as avg_port, COUNT(*) as count
-FROM alertas
-GROUP BY clasification
-'''
-
-cursor = conn.cursor()
-cursor.execute(query)
-results = cursor.fetchall()
-
-clasifications = []
-avg_ports = []
-total_services = []
-insecure_services = []
-
-for row in results:
-    clasification, avg_port, count = row
-    clasifications.append(clasification)
-    avg_ports.append(avg_port)
-    total_services.append(count)
-    insecure_services.append(0)
-
-fig, ax = plt.subplots()
-ax.bar(clasifications, avg_ports, label='Media de puertos abiertos')
-ax.plot(clasifications, total_services, label='Total de servicios detectados', color='red')
-ax.plot(clasifications, insecure_services, label='Servicios inseguros', color='orange')
-ax.legend()
-ax.set_xlabel('Clasificación')
-ax.set_ylabel('Puertos')
-ax.set_title('Media de puertos abiertos por clasificación de vulnerabilidad')
-plt.xticks(rotation=90)
-plt.show()
