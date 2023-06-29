@@ -57,7 +57,7 @@ plt.tight_layout()
 
 plt.show()
 # Tarea 3: Porcentaje del total de alertas por categoría en un gráfico circular
-plt.figure(figsize=(10,10))
+plt.figure(figsize=(15,10))
 
 conteo_alertas = df['clasificacion'].value_counts()
 
@@ -67,7 +67,7 @@ plt.title('Porcentaje del Total de Alertas por Categoría')
 plt.pie(conteo_alertas, startangle=90, radius=1)
 
 # Añadir etiquetas fuera del gráfico
-plt.legend(etiquetas, bbox_to_anchor=(0.9, 0))
+plt.legend(etiquetas, bbox_to_anchor=(1.5, 0.7))
 plt.tight_layout()
 plt.show()
 
