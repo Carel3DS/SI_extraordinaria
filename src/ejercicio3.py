@@ -1,4 +1,4 @@
-# Ejercicio 3:\tAlertas
+# Ejercicio 3: Alertas
 
 import sqlite3
 
@@ -43,9 +43,9 @@ num_missing_p2 = priority_2['vulnerabilidades_detectadas'].isnull().sum()
 num_missing_p3 = priority_3['vulnerabilidades_detectadas'].isnull().sum()
 
 # Calculate the mode for each priority
-mode_p1 = priority_1['vulnerabilidades_detectadas'].mode().values[0]
-mode_p2 = priority_2['vulnerabilidades_detectadas'].mode().values[0]
-mode_p3 = priority_3['vulnerabilidades_detectadas'].mode().values[0]
+mode_p1 = priority_1['vulnerabilidades_detectadas'].mode().to_list()
+mode_p2 = priority_2['vulnerabilidades_detectadas'].mode().to_list()
+mode_p3 = priority_3['vulnerabilidades_detectadas'].mode().to_list()
 
 # Calculate the median for each priority
 median_p1 = priority_1['vulnerabilidades_detectadas'].median()
@@ -80,8 +80,8 @@ num_missing_july = july['vulnerabilidades_detectadas'].isnull().sum()
 num_missing_august = august['vulnerabilidades_detectadas'].isnull().sum()
 
 # Calculate the mode for each month
-mode_july = july['vulnerabilidades_detectadas'].mode().values[0]
-mode_august = august['vulnerabilidades_detectadas'].mode().values[0]
+mode_july = july['vulnerabilidades_detectadas'].mode().to_list()
+mode_august = august['vulnerabilidades_detectadas'].mode().to_list()
 
 # Calculate the median for each month
 median_july = july['vulnerabilidades_detectadas'].median()
@@ -192,3 +192,5 @@ print()
 print("Valor mínimo para agosto:\t", min_august)
 print("Valor máximo para agosto:\t", max_august)
 print()
+
+
