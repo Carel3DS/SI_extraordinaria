@@ -66,7 +66,9 @@ etiquetas = ['{0} - {1:1.3f} %'.format(i,j) for i,j in zip(df['clasificacion'].u
 plt.title('Porcentaje del Total de Alertas por Categoría')
 plt.pie(conteo_alertas, startangle=90, radius=1)
 
-# Nota: Añadimos las etiquetas en la leyenda debido a la miniatura del resto de las secciones
+# Añadir etiquetas fuera del gráfico
+plt.legend(etiquetas, bbox_to_anchor=(0.9, 0))
+plt.tight_layout()
 plt.show()
 
 
